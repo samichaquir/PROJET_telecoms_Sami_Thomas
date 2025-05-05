@@ -9,7 +9,7 @@ close all
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %PARAMETRES GENERAUX 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Fe=24000;       %Fréquence d'échantillonnage
+Fe=12000;       %Fréquence d'échantillonnage
 Te=1/Fe;        %Période d'échantillonnage
 Rb=3000;        %Débit binaire souhaité
 N=10000;         %Nombre de bits générés
