@@ -19,7 +19,7 @@ Rs=Rb/log2(M);          % Débit symbole
 Ns=Fe/Rs;               % Facteur de suréchantillonnage
 
 %tableau des valeurs de SNR par bit souhaité à l'entrée du récepteur en dB
-tab_Eb_N0_dB=[0:6]; 
+tab_Eb_N0_dB=0:6; 
 %Passage au SNR en linéaire
 tab_Eb_N0=10.^(tab_Eb_N0_dB/10);
 
@@ -47,7 +47,7 @@ for indice_bruit=1:length(tab_Eb_N0_dB)
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % BOUCLE POUR PRECISION TEB MESURE : COMPTAGE NOMBRE ERREURS
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %while(nb_erreurs<10000)
+    while(nb_erreurs<10000)
 
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %GENERATION DE L'INFORMATION BINAIRE
@@ -58,11 +58,11 @@ for indice_bruit=1:length(tab_Eb_N0_dB)
         %CODAGE CONVOLUTIF
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         bits = codage_convolutif(bits_init);
-        
+
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %MAPPING
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        symboles=2*bits-1;
+        symboles=(-2)*bits+1;
         
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %SURECHANTILLONNAGE
@@ -83,7 +83,7 @@ for indice_bruit=1:length(tab_Eb_N0_dB)
         P_signal=mean(abs(Signal_emis).^2);
         P_bruit=(P_signal*Ns)/(2*log2(M)*Eb_N0);
         Bruit=sqrt(P_bruit)*randn(1,length(Signal_emis));
-        Signal_recu=Signal_emis;%+Bruit;
+        Signal_recu=Signal_emis+Bruit;
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %FILTRAGE DE RECEPTION
@@ -108,22 +108,22 @@ for indice_bruit=1:length(tab_Eb_N0_dB)
         TES=TES+sum(symboles_recus~=symboles)/length(symboles);
         
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %DEMAPPING
+        %DECODAGE DE VITERBI
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        bits_recus=(symboles_recus+1)/2;
-        
+        bits_recus = decode_viterbi(symboles_recus);
+
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %CALCUL DU TAUX D'ERREUR BINAIRE CUMULE
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        TEB=TEB+sum(bits_recus~=bits)/length(bits);
+        TEB=TEB+sum(bits_recus~=bits_init)/length(bits_init);
         
         %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %CUMUL DU NOMBRE D'ERREURS ET NOMBRE DE CUMUL REALISES
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        nb_erreurs=nb_erreurs+sum(bits_recus~=bits);
+        nb_erreurs=nb_erreurs+sum(bits_recus~=bits_init);
         nb_cumul=nb_cumul+1;
 
-    %end  %fin boucle sur comptage nombre d'erreurs
+    end  %fin boucle sur comptage nombre d'erreurs
 
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %CALCUL DU TAUX D'ERREUR SYMBOLE ET DU TAUX D'ERREUR BINAIRE POUR LA
@@ -144,29 +144,12 @@ for indice_bruit=1:length(tab_Eb_N0_dB)
 end  %fin boucle sur les valeurs testées de Eb/N0
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%CALCUL DU TES ET DU TEB THEORIQUE DE LA CHAINE IMPLANTEE
+%TRACES DES TEB OBTENUS EN FONCTION DE Eb/N0
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-TES_THEO=qfunc(sqrt(2*tab_Eb_N0));
-TEB_THEO=TES_THEO;
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%TRACES DES TES ET TEB OBTENUS EN FONCTION DE Eb/N0
-%COMPARAISON AVEC LES TES et TEBs THEORIQUES DE LA CHAINE IMPLANTEE
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-figure
-semilogy(tab_Eb_N0_dB,TES_THEO,'r-x')
-hold on
-semilogy(tab_Eb_N0_dB,TES_simule,'b-o')
-legend('TES théorique','TES simulé')
-xlabel('E_b/N_0 (dB)')
-ylabel('TES')
-title('TES de la chaine BPSK filtre rectangulaire')
 
 figure
-semilogy(tab_Eb_N0_dB,TEB_THEO,'r-x')
-hold on
 semilogy(tab_Eb_N0_dB,TEB_simule,'b-o')
-legend('TEB théorique','TEB simulé')
+legend('TEB simulé')
 xlabel('E_b/N_0 (dB)')
 ylabel('TEB')
 title('TEB de la chaine BPSK filtre rectangulaire')
